@@ -1,4 +1,4 @@
-const { createAdmin, unzip } = require('./index.js')
+const { createAdmin } = require('./index.js')
 
 let a = false
 let b = false
@@ -6,7 +6,7 @@ let c = false
 
 module.exports = createAdmin({
   tasks: {
-    a: {
+    A: {
       dependencies: [],
       verify() {
         return a
@@ -18,8 +18,8 @@ module.exports = createAdmin({
         a = false
       },
     },
-    b: {
-      dependencies: ['a'],
+    B: {
+      dependencies: ['A'],
       verify() {
         return b
       },
@@ -30,8 +30,8 @@ module.exports = createAdmin({
         b = false
       },
     },
-    c: {
-      dependencies: ['b'],
+    C: {
+      dependencies: ['B'],
       verify() {
         return c
       },

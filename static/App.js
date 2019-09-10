@@ -109,7 +109,11 @@ function TaskList({ taskStates, commander }) {
       TableRow,
       { key: task },
       e(TableCell, { component: 'th', scope: 'row' }, task),
-      e(TableCell, { align: 'right' }, taskStates[task]),
+      e(
+        TableCell,
+        { align: 'right' },
+        e(Typography, { variant: 'button' }, taskStates[task]),
+      ),
       button('verify', task),
       button('install', task),
       button('uninstall', task),
