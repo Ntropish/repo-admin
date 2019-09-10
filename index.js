@@ -5,7 +5,7 @@ const R = require('ramda')
 const WebSocket = require('ws')
 const EventEmitter = require('events')
 
-module.exports = function createAdmin(config) {
+function createAdmin(config) {
   if (!config.path) config.path = '/admin'
 
   const emitter = new EventEmitter()
@@ -13,12 +13,21 @@ module.exports = function createAdmin(config) {
   const taskList = Object.keys(config.tasks || {})
   const taskStates = {}
   taskList.forEach(key => {
-    taskStates[key] = 'unverified'
+    taskStates[key] = 'validating...'
   })
 
-  async function install(task) {
-    await config.tasks[task].install()
-    await verify(task)
+  async function install(taskName) {
+    const task = config.tasks[taskName]
+    await Promise.all(
+      task.dependencies.map(async subtaskName => {
+        const isValid = await verify(subtaskName)
+        if (!isValid) {
+          await install(subtaskName)
+        }
+      }),
+    )
+    await task.install()
+    await verify(taskName)
   }
   async function uninstall(task) {
     await config.tasks[task].uninstall()
@@ -26,7 +35,7 @@ module.exports = function createAdmin(config) {
   }
   async function verify(task) {
     const verified = await config.tasks[task].verify()
-    const nextState = verified ? 'verified' : 'invalid'
+    const nextState = verified ? 'valid' : 'invalid'
     taskStates[task] = nextState
     emitter.emit('change')
   }
@@ -45,16 +54,14 @@ module.exports = function createAdmin(config) {
     const wss = new WebSocket.Server({ port: 4938 })
     wss.on('connection', ws => {
       ws.on('message', e => {
-        console.log('message:', e)
         const [command, ...args] = JSON.parse(e)
+        const c = commands[command]
         commands[command](...args)
       })
-      console.log('connection')
       const sendState = () =>
         ws.send(JSON.stringify(['set', ['taskStates'], taskStates]))
       sendState()
       emitter.on('change', () => {
-        console.log('change detected')
         sendState()
       })
       ws.send(JSON.stringify(['log', 'hello from your admin']))
@@ -98,3 +105,7 @@ const template = path => html`
     </body>
   </html>
 `
+
+module.exports = {
+  createAdmin,
+}
