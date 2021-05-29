@@ -14,7 +14,7 @@
     "@material-ui/icons": "^4.4.1",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "ws": "^7.1.2"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "express": "^4.17.1",
